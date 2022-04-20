@@ -4,7 +4,8 @@ namespace Cosmic5173\ScoreboardAPI\scoreboard;
 
 use Cosmic5173\ScoreboardAPI\scoreboard\factory\ScoreFactory;
 use Cosmic5173\ScoreboardAPI\scoreboard\factory\ScoreFactoryException;
-use Cosmic5173\ScoreboardAPI\tag\TagManager;
+use Cosmic5173\ScoreboardAPI\tag\ScoreTag;
+use Cosmic5173\ScoreboardAPI\tag\ScoreTagResolveEvent;
 use Cosmic5173\ScoreboardAPI\utils\Utils;
 use pocketmine\player\Player;
 
@@ -60,7 +61,8 @@ class Scoreboard {
             if (isset($line)) {
                 $tags = Utils::resolveTags($line);
                 foreach ($tags as $tag) {
-                    $line = str_replace($tag, TagManager::getInstance()->getTag($tag)($player), $line);
+                    $ev = new ScoreTagResolveEvent(new ScoreTag($tag, ""), $player); $ev->call();
+                    $line = str_replace($tag, $ev->getTag()->getValue(), $line);
                 }
 
                 ScoreFactory::sendLines($player, [$index => $line]);
@@ -80,7 +82,8 @@ class Scoreboard {
         foreach ($this->lines as $index=>$line) {
             $tags = Utils::resolveTags($line);
             foreach ($tags as $tag) {
-                $line[$index] = str_replace($tag, TagManager::getInstance()->getTag($tag)($player), $line);
+                $ev = new ScoreTagResolveEvent(new ScoreTag($tag, ""), $player); $ev->call();
+                $line[$index] = str_replace($tag, $ev->getTag()->getValue(), $line);
             }
         }
         ScoreFactory::sendLines($player, $lines);
